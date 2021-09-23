@@ -36,6 +36,11 @@ library(rmarkdown)
 library(readxl)
 library(skimr)
 library(kableExtra)
+
+# additional libraries used farther down that I had to install
+library(ggthemes)
+library(kableExtra)
+library(janitor)
 ```
 
 ```{r write_packages_bib, include=FALSE}
@@ -228,10 +233,16 @@ Save this plot to the variable `plot_1` and show it.
 library(ggplot2)
 
 plot_1 <- ggplot(data = smoke_complete,
-                 aes(x =  ________)) +
+                 aes(x =  cigarettes_per_day)) +
   geom_histogram()
 
 plot_1
+
+plot_1a <- ggplot(data = smoke_complete) +
+                  geom_histogram(aes(x = cigarettes_per_day),
+                                 binwidth = 1)
+
+plot_1a
 ```
 
 We've made a plot, but there are some issues with it: 
@@ -248,15 +259,17 @@ Let's make our plot a bit prettier.
 
 ```{r beautify_plot_2}
 
-plot_2 <- ggplot(data = smoke_complete,
-                 aes(x =  cigarettes_per_day)) +
-  geom_histogram() +
-  labs(title = "________",
-       x = "________",
-       y = "________") +
-  ________
+# plot_2 <- ggplot(data = smoke_complete,
+#                  aes(x =  cigarettes_per_day)) +
+#   geom_histogram() +
+#   labs(title = "________",
+#        x = "________",
+#        y = "________") +
+#   ________
 
-plot_2
+# plot_2
+
+plot_1a + labs(title = "Cigarettes per day", x = "Cigarettes per day", y = "Count") + theme_classic()
 ```
 You got a message after running that code that: "`stat_bin()` using `bins = 30`.
 Pick better value with `binwidth`."
@@ -264,15 +277,23 @@ Pick better value with `binwidth`."
 Let's modify the width of our histogram's bins in the code chunk below to `2`. Then try `10`.
 
 ```{r binwidth}
-plot_3 <- ggplot(data = smoke_complete,
-                 aes(x =  cigarettes_per_day)) +
-  geom_histogram(binwidth = ________) +
-  labs(title = "An excellent title for your plot",
-       x = "Cigarettes Per Day",
-       y = "Count") +
-  theme_classic()
+# plot_3 <- ggplot(data = smoke_complete,
+#                  aes(x =  cigarettes_per_day)) +
+#   geom_histogram(binwidth = ________) +
+#   labs(title = "An excellent title for your plot",
+#        x = "Cigarettes Per Day",
+#        y = "Count") +
+#   theme_classic()
+# 
+# plot_3
 
-plot_3
+plot_1b <- ggplot(data = smoke_complete) +
+                  geom_histogram(aes(x = cigarettes_per_day,
+                                     fill = gender),
+                                 binwidth = 1)
+
+plot_1b + labs(title = "Cigarettes per day", x = "Cigarettes per day", y = "Count") + theme_classic()
+
 ```
 Finally let's explore the differences in daily cigarettes for the `gender` variable
 by adding a `fill` color and `facet_grid`.
@@ -280,20 +301,30 @@ by adding a `fill` color and `facet_grid`.
 Below add `gender` to the facet.
 
 ```{r facet}
-plot_4 <- ggplot(data = smoke_complete,
-                 aes(x =  cigarettes_per_day,
-                     fill = gender)) +
-  geom_histogram(binwidth = 2) +
-  labs(title = "An excellent title for your plot",
-       x = "Cigarettes Per Day",
-       y = "Count",
-       fill = "Gender") +
+# plot_4 <- ggplot(data = smoke_complete,
+#                  aes(x =  cigarettes_per_day,
+#                      fill = gender)) +
+#   geom_histogram(binwidth = 2) +
+#   labs(title = "An excellent title for your plot",
+#        x = "Cigarettes Per Day",
+#        y = "Count",
+#        fill = "Gender") +
+#   theme_classic() +
+#   facet_grid(. ~ ________)
+# 
+# plot_4 
+
+plot_1b + labs(title = "Cigarettes per day", x = "Cigarettes per day", y = "Count") +
   theme_classic() +
-  facet_grid(. ~ ________)
+  facet_grid("gender")
 
-plot_4 
+plot_1b + labs(title = "Cigarettes per day", x = "Cigarettes per day", y = "Count") +
+  theme_classic() +
+  facet_grid(. ~gender)
 ```
+### Weird error: fill with gender shows Female smoke more.  Faceted grid shows Male smoke more.
 
+### Note: might be useful to plot by col and by row to show contrast in x-axis and in y-axis
 
 ## `ggplot2`: A Grammar of Graphics
 
@@ -438,10 +469,21 @@ Theme options:
 
 ```{r step_7}
 
-plot_5 + ________
+plot_2a <- ggplot(data = smoke_complete) +
+                  geom_point(mapping = aes(x = age_at_diagnosis, y = cigarettes_per_day, color = disease), alpha = 0.2) + facet_grid(cols = vars(gender))
 
-plot_5 + ________)
+plot_2a
+
+plot_2a <- ggplot(data = smoke_complete) +
+                  geom_point(mapping = aes(x = age_at_diagnosis, y = cigarettes_per_day, color = disease), alpha = 0.2) + facet_grid(. ~gender)
+
+plot_2a + theme_light()
 ```
+### Females have CESC (mostly at younger age).  Males don't have that.
+
+### Hard to tell if there is much difference between gender in LUSC and BLCA.
+
+### Weird syntax vars(gender) avoided by using ~gender - BUT... need to understand syntax further
 
 There are plenty of out of the box themes in `ggplot2`, but you can make a theme, use other people's, or even use a theme your organization might already have.
 Let's load the `{ggthemes}' library.
@@ -452,11 +494,11 @@ library(ggthemes)
 
 ```{r ggthemes_playground}
 
-plot_5 + theme_economist() + labs(subtitle = "The Economist Style")
+plot_2a + theme_economist() + labs(subtitle = "The Economist Style")
 
-plot_5 + theme_wsj() + labs(subtitle = "WSJ Style")
+plot_2a + theme_wsj() + labs(subtitle = "WSJ Style")
 
-plot_5 + theme_tufte() + labs(subtitle = "Tufte Style")
+plot_2a + theme_tufte() + labs(subtitle = "Tufte Style")
 
 ```
 
@@ -527,12 +569,17 @@ We meet the pipe `%>%` earlier, but let's see how we can combine multiple pipes 
 smoke_complete %>% 
 	filter(year_of_birth <= 1960) %>% 
 	select(age_at_diagnosis, gender)
+
+smoke_complete %>%
+  filter(state == 'live') %>%
+  select(cigarettes_per_day, gender, days_to_death)
+
 ```
 
 
 ## mutate()
 
-Let's make `age_at_diagnosis` more human friendly by creating a new column that divides the days by 365.25. (There are great R packages to handle data, times, duration, intervals, and all those other message time and date issues!)
+Let's make `age_at_diagnosis` more human friendly by creating a new column that divides the days by 365.25. (There are great R packages to handle data, times, duration, intervals, and all those other messy time and date issues!)
 
 `mutate` also lets you create multiple "mutations" (e.g., calculations) at the same time.
 
@@ -577,6 +624,11 @@ We can pass in each column of values from our data using the `$` notation
 
 ```{r table_base}
 table(smoke_complete$vital_status, smoke_complete$disease)
+
+table(smoke_complete$vital_status, smoke_complete$state, smoke_complete$disease)
+# labeling of levels not clean
+
+table(smoke_complete$gender, smoke_complete$disease)
 ```
 
 We can also use the `addmargins` if we want to see row and column sums with our count table.
@@ -598,7 +650,7 @@ One quick example here of our prior code chunk output `table_1`. We take that sa
 table_1 %>% 
   head(10) %>% #just to only print the top 10 rows
   kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kable_styling(bootstrap_options = c("striped"))
 
 ```
 
